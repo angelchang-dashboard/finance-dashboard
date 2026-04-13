@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>内账下钻分析 · 多媒体</title>
+<script>
+(function(){
+  if(sessionStorage.getItem('dashboard_auth')==='techchangeworld') return;
+  var s=document.createElement('style');
+  s.textContent='#auth-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;font-family:"PingFang SC","Microsoft YaHei",sans-serif;}#auth-box{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:40px 48px;text-align:center;backdrop-filter:blur(20px);}#auth-title{font-size:13px;letter-spacing:0.3em;color:#818cf8;font-weight:500;margin-bottom:8px;text-transform:uppercase;}#auth-subtitle{font-size:22px;font-weight:700;color:#fff;margin-bottom:32px;}#auth-input{width:260px;padding:12px 16px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(129,140,248,0.4);border-radius:10px;font-size:14px;color:#fff;outline:none;text-align:center;letter-spacing:0.1em;}#auth-input:focus{border-color:#818cf8;box-shadow:0 0 0 3px rgba(129,140,248,0.2);}#auth-input::placeholder{color:rgba(255,255,255,0.3);}#auth-btn{margin-top:14px;width:260px;padding:12px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;letter-spacing:0.08em;}#auth-btn:hover{opacity:0.9;}#auth-error{margin-top:10px;font-size:12px;color:#f87171;height:16px;}';
+  document.head.appendChild(s);
+  var o=document.createElement('div');
+  o.id='auth-overlay';
+  o.innerHTML='<div id="auth-box"><div id="auth-title">Finance Intelligence</div><div id="auth-subtitle">内账下钻分析</div><input id="auth-input" type="password" placeholder="请输入访问密码"/><button id="auth-btn">进 入</button><div id="auth-error"></div></div>';
+  document.body.appendChild(o);
+  function doAuth(){
+    var v=document.getElementById('auth-input').value;
+    if(v==='techchangeworld'){sessionStorage.setItem('dashboard_auth','techchangeworld');document.getElementById('auth-overlay').remove();}
+    else{document.getElementById('auth-error').textContent='密码错误，请重试';document.getElementById('auth-input').value='';document.getElementById('auth-input').focus();}
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    document.getElementById('auth-btn').addEventListener('click',doAuth);
+    document.getElementById('auth-input').addEventListener('keydown',function(e){if(e.key==='Enter')doAuth();});
+  });
+})();
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { background: #0f172a; color: #e2e8f0; font-family: 'PingFang SC','Microsoft YaHei',sans-serif; }
+  .glass { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(12px); }
+  .glass-strong { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(20px); }
+  .step-btn { transition: all 0.2s; }
+  .step-btn.active { background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff; }
+  .step-btn:not(.active) { background: rgba(255,255,255,0.05); color: #94a3b8; }
+  .step-btn:not(.active):hover { background: rgba(255,255,255,0.08); color: #c4b5fd; }
+  .tab-btn.active { background: rgba(99,102,241,0.2); color: #a5b4fc; border-color: rgba(99,102,241,0.4); }
+  .tab-btn:not(.active) { color: #64748b; border-color: transparent; }
+  .tab-btn:not(.active):hover { color: #94a3b8; }
+  .kpi-pos { border-color: rgba(34,197,94,0.3); }
+  .kpi-neg { border-color: rgba(239,68,68,0.3); }
+  .prog-bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg,#6366f1,#8b5cf6); transition: width 0.8s ease; }
+  details > summary { cursor: pointer; user-select: none; }
+  details > summary::-webkit-details-marker { display: none; }
+  .slider-wrap input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.1); outline: none; }
+  .slider-wrap input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #8b5cf6; cursor: pointer; }
+  tr:hover td { background: rgba(255,255,255,0.03); }
+  .badge-green { background: rgba(34,197,94,0.15); color: #86efac; padding: 2px 8px; border-radius: 20px; font-size: 11px; }
+  .badge-red { background: rgba(239,68,68,0.15); color: #fca5a5; padding: 2px 8px; border-radius: 20px; font-size: 11px; }
+  .badge-gray { background: rgba(148,163,184,0.15); color: #94a3b8; padding: 2px 8px; border-radius: 20px; font-size: 11px; }
+</style>
+</head>
+<body class="min-h-screen p-4 md:p-6">
+
+<!-- Header -->
+<div class="max-w-7xl mx-auto">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <div class="text-xs text-indigo-400 tracking-widest uppercase mb-1">Finance Intelligence · 内账下钻分析</div>
+      <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+        <span class="text-2xl">🎬</span> 多媒体场景
+        <span class="text-sm font-normal text-slate-400 ml-2">FY2026 · 数据截止 2月</span>
+      </h1>
+    </div>
+    <div class="text-right hidden md:block">
+      <div class="text-xs text-slate-500 mb-1">全年预算</div>
+      <div class="text-xl font-bold text-white">11.20 亿元</div>
+      <div class="text-xs text-slate-400">YoY +32.2% vs FY25</div>
+    </div>
+  </div>
+
+  <!-- Step Nav -->
+  <div class="flex gap-2 mb-6">
+    <button class="step-btn active px-5 py-2 rounded-lg text-sm font-medium" onclick="showStep(1,this)">① 预实对比</button>
+    <button class="step-btn px-5 py-2 rounded-lg text-sm font-medium" onclick="showStep(2,this)">② 量价分析</button>
+    <button class="step-btn px-5 py-2 rounded-lg text-sm font-medium" onclick="showStep(3,this)">③ 优化测算</button>
+  </div>
+
+  <!-- ======== STEP 1 ======== -->
+  <div id="step1">
+    <!-- 月报摘要 -->
+    <div class="glass rounded-xl p-5 mb-5">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-1 h-5 rounded-full bg-indigo-500"></div>
+        <span class="text-sm font-semibold text-slate-300">月报摘要 · 2026年2月</span>
+      </div>
+      <p class="text-sm text-slate-300 leading-relaxed" id="summary-text"></p>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5" id="kpi-cards"></div>
+
+    <!-- 进度条 -->
+    <div class="glass rounded-xl p-5 mb-5">
+      <div class="flex justify-between items-center mb-3">
+        <span class="text-sm text-slate-400">全年预算消耗进度</span>
+        <span class="text-sm font-semibold text-white" id="prog-pct"></span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="flex justify-between mt-2 text-xs text-slate-500">
+        <span id="prog-used"></span>
+        <span id="prog-total"></span>
+      </div>
+    </div>
+
+    <!-- 图表区 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+      <div class="glass rounded-xl p-5">
+        <div class="text-sm font-medium text-slate-300 mb-4">月度支出趋势（亿元）</div>
+        <canvas id="chart-amount" height="220"></canvas>
+      </div>
+      <div class="glass rounded-xl p-5">
+        <div class="text-sm font-medium text-slate-300 mb-4">效率趋势 · APP万分钟时长成本（元/万分钟）</div>
+        <canvas id="chart-eff" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- 明细表 -->
+    <details class="glass rounded-xl">
+      <summary class="p-5 flex items-center justify-between">
+        <span class="text-sm font-medium text-slate-300">月度明细表</span>
+        <span class="text-xs text-slate-500">点击展开 ▾</span>
+      </summary>
+      <div class="px-5 pb-5 overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="border-b border-white/10">
+              <th class="text-left py-2 pr-4 text-slate-500 font-medium">月份</th>
+              <th class="text-right py-2 pr-4 text-slate-500 font-medium">实际（亿）</th>
+              <th class="text-right py-2 pr-4 text-slate-500 font-medium">预算（亿）</th>
+              <th class="text-right py-2 pr-4 text-slate-500 font-medium">差额</th>
+              <th class="text-right py-2 pr-4 text-slate-500 font-medium">完成率</th>
+              <th class="text-right py-2 pr-4 text-slate-500 font-medium">效率实际</th>
+              <th class="text-right py-2 text-slate-500 font-medium">效率预算</th>
+            </tr>
+          </thead>
+          <tbody id="detail-table"></tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <!-- ======== STEP 2 ======== -->
+  <div id="step2" style="display:none">
+    <div class="glass rounded-xl p-5 mb-5">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-1 h-5 rounded-full bg-violet-500"></div>
+        <span class="text-sm font-semibold text-slate-300">成本构成概览</span>
+      </div>
+      <p class="text-sm text-slate-300 leading-relaxed">多媒体场景成本以 <strong class="text-white">CDN 网络费用</strong>为最大项，占比约 50%，其次为 <strong class="text-white">SaaS 类服务</strong>（数据万象、边缘安全加速、视频点播等，约 30%），存储约 5%，计算资源（CPU+GPU）约 5%。量价分析详细数据待进一步补充。</p>
+    </div>
+
+    <!-- Tab -->
+    <div class="flex gap-2 mb-4">
+      <button class="tab-btn active px-4 py-2 rounded-lg text-sm border" onclick="showTab('cdn',this)">CDN 网络</button>
+      <button class="tab-btn px-4 py-2 rounded-lg text-sm border" onclick="showTab('saas',this)">SaaS 服务</button>
+      <button class="tab-btn px-4 py-2 rounded-lg text-sm border" onclick="showTab('storage',this)">存储</button>
+      <button class="tab-btn px-4 py-2 rounded-lg text-sm border" onclick="showTab('compute',this)">计算资源</button>
+    </div>
+
+    <div id="tab-cdn" class="glass rounded-xl p-6">
+      <div class="text-center py-8 text-slate-400">
+        <div class="text-4xl mb-4">🌐</div>
+        <div class="text-base font-medium text-slate-300 mb-2">CDN 量价分析</div>
+        <div class="text-sm text-slate-500 max-w-md mx-auto">数据待补充：需要各月 CDN 带宽用量（Mbps）及加权均价，以及视频直播 CDN / 非直播 CDN / 其他的拆分明细。</div>
+        <div class="mt-4 grid grid-cols-3 gap-4 max-w-lg mx-auto text-left">
+          <div class="glass rounded-lg p-3"><div class="text-xs text-slate-500 mb-1">1月 CDN 金额</div><div class="text-base font-bold text-white">~284 万元</div><div class="text-xs text-slate-500">占当月 50%</div></div>
+          <div class="glass rounded-lg p-3"><div class="text-xs text-slate-500 mb-1">视频直播</div><div class="text-base font-bold text-white">~140 万元</div><div class="text-xs text-slate-500">49% of CDN</div></div>
+          <div class="glass rounded-lg p-3"><div class="text-xs text-slate-500 mb-1">非直播 CDN</div><div class="text-base font-bold text-white">~145 万元</div><div class="text-xs text-slate-500">51% of CDN</div></div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-saas" class="glass rounded-xl p-6" style="display:none">
+      <div class="text-center py-8 text-slate-400">
+        <div class="text-4xl mb-4">☁️</div>
+        <div class="text-base font-medium text-slate-300 mb-2">SaaS 服务量价分析</div>
+        <div class="text-sm text-slate-500 max-w-md mx-auto">数据待补充：需要数据万象、边缘安全加速、视频点播、HTTPDNS 等主要产品的月度金额明细。</div>
+        <div class="mt-4 grid grid-cols-2 gap-3 max-w-md mx-auto text-left">
+          <div class="glass rounded-lg p-3"><div class="text-xs text-slate-500 mb-1">数据万象</div><div class="text-sm font-bold text-white">~130 万/月</div></div>
+          <div class="glass rounded-lg p-3"><div class="text-xs text-slate-500 mb-1">边缘安全加速</div><div class="text-sm font-bold text-white">~35 万/月</div></div>
+          <div class="glass rounded-lg p-3"><div class="text-xs text-slate-500 mb-1">视频点播</div><div class="text-sm font-bold text-white">~18 万/月</div></div>
+          <div class="glass rounded-lg p-3"><div class="text-xs text-slate-500 mb-1">HTTPDNS</div><div class="text-sm font-bold text-white">~16 万/月</div></div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-storage" class="glass rounded-xl p-6" style="display:none">
+      <div class="text-center py-8 text-slate-400">
+        <div class="text-4xl mb-4">💾</div>
+        <div class="text-base font-medium text-slate-300 mb-2">存储量价分析</div>
+        <div class="text-sm text-slate-500">数据待补充：需要标准存储/归档存储/带宽等月度容量及单价明细，以及 Top 应用分布。</div>
+        <div class="mt-4 grid grid-cols-3 gap-3 max-w-lg mx-auto text-left">
+          <div class="glass rounded-lg p-3"><div class="text-xs text-slate-500 mb-1">标准存储</div><div class="text-sm font-bold text-white">~19 万/月</div></div>
+          <div class="glass rounded-lg p-3"><div class="text-xs text-slate-500 mb-1">归档存储</div><div class="text-sm font-bold text-white">~5 万/月</div></div>
+          <div class="glass rounded-lg p-3"><div class="text-xs text-slate-500 mb-1">公网带宽</div><div class="text-sm font-bold text-white">~6 万/月</div></div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-compute" class="glass rounded-xl p-6" style="display:none">
+      <div class="text-center py-8 text-slate-400">
+        <div class="text-4xl mb-4">🖥️</div>
+        <div class="text-base font-medium text-slate-300 mb-2">计算资源量价分析</div>
+        <div class="text-sm text-slate-500">数据待补充：需要 CPU 核数/型号/单价/利用率，GPU 卡数/型号/单价，以及月度变化趋势。</div>
+        <div class="mt-4 grid grid-cols-2 gap-3 max-w-md mx-auto text-left">
+          <div class="glass rounded-lg p-3"><div class="text-xs text-slate-500 mb-1">CPU（1月）</div><div class="text-sm font-bold text-white">~24 万元</div><div class="text-xs text-slate-400">混部容器为主</div></div>
+          <div class="glass rounded-lg p-3"><div class="text-xs text-slate-500 mb-1">GPU（1月）</div><div class="text-sm font-bold text-white">~5 万元</div><div class="text-xs text-slate-400">L20/H20 为主</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== STEP 3 ======== -->
+  <div id="step3" style="display:none">
+    <!-- 预测摘要 -->
+    <div class="glass rounded-xl p-5 mb-5">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-1 h-5 rounded-full bg-amber-500"></div>
+        <span class="text-sm font-semibold text-slate-300">达成分析与全年预测</span>
+      </div>
+      <p class="text-sm text-slate-300 leading-relaxed" id="forecast-text"></p>
+    </div>
+
+    <!-- 预测图 -->
+    <div class="glass rounded-xl p-5 mb-5">
+      <div class="text-sm font-medium text-slate-300 mb-4">全年支出预测（亿元）</div>
+      <canvas id="chart-forecast" height="200"></canvas>
+    </div>
+
+    <!-- 滑块调节器 -->
+    <div class="glass rounded-xl p-5 mb-5">
+      <div class="text-sm font-semibold text-slate-300 mb-4">资源优化测算</div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="slider-wrap">
+          <div class="flex justify-between mb-2">
+            <span class="text-xs text-slate-400">CDN 带宽削减</span>
+            <span class="text-xs font-bold text-indigo-400" id="sl1-val">0%</span>
+          </div>
+          <input type="range" min="0" max="30" value="0" id="sl1" oninput="updateForecast()">
+          <div class="flex justify-between mt-1 text-xs text-slate-600"><span>0%</span><span>30%</span></div>
+        </div>
+        <div class="slider-wrap">
+          <div class="flex justify-between mb-2">
+            <span class="text-xs text-slate-400">SaaS 费用优化</span>
+            <span class="text-xs font-bold text-indigo-400" id="sl2-val">0%</span>
+          </div>
+          <input type="range" min="0" max="20" value="0" id="sl2" oninput="updateForecast()">
+          <div class="flex justify-between mt-1 text-xs text-slate-600"><span>0%</span><span>20%</span></div>
+        </div>
+        <div class="slider-wrap">
+          <div class="flex justify-between mb-2">
+            <span class="text-xs text-slate-400">计算资源削减</span>
+            <span class="text-xs font-bold text-indigo-400" id="sl3-val">0%</span>
+          </div>
+          <input type="range" min="0" max="20" value="0" id="sl3" oninput="updateForecast()">
+          <div class="flex justify-between mt-1 text-xs text-slate-600"><span>0%</span><span>20%</span></div>
+        </div>
+      </div>
+      <div class="mt-5 grid grid-cols-3 gap-4">
+        <div class="glass rounded-lg p-4 text-center">
+          <div class="text-xs text-slate-500 mb-1">调节后全年预测</div>
+          <div class="text-xl font-bold text-white" id="adj-total">—</div>
+          <div class="text-xs text-slate-500">亿元</div>
+        </div>
+        <div class="glass rounded-lg p-4 text-center">
+          <div class="text-xs text-slate-500 mb-1">vs 预算节省</div>
+          <div class="text-xl font-bold text-emerald-400" id="adj-save">—</div>
+          <div class="text-xs text-slate-500">亿元</div>
+        </div>
+        <div class="glass rounded-lg p-4 text-center">
+          <div class="text-xs text-slate-500 mb-1">节省比例</div>
+          <div class="text-xl font-bold text-emerald-400" id="adj-pct">—</div>
+          <div class="text-xs text-slate-500">vs 预算</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 逐月预测表 -->
+    <div class="glass rounded-xl p-5">
+      <div class="text-sm font-semibold text-slate-300 mb-4">逐月预测明细</div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead>
+            <tr class="border-b border-white/10">
+              <th class="text-left py-2 pr-4 text-slate-500 font-medium">月份</th>
+              <th class="text-right py-2 pr-4 text-slate-500 font-medium">预算（亿）</th>
+              <th class="text-right py-2 pr-4 text-slate-500 font-medium">实际/预测（亿）</th>
+              <th class="text-right py-2 pr-4 text-slate-500 font-medium">调节后预测（亿）</th>
+              <th class="text-right py-2 text-slate-500 font-medium">较预算节省</th>
+            </tr>
+          </thead>
+          <tbody id="forecast-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /max-w -->
+
+<script>
+// ===================== DATA =====================
+const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const ACTUAL_KNOWN = 2;
+
+const ACTUAL  = [0.7541,0.6922,0.8905,0.9087,0.9315,0.9231,0.9888,1.0242,0.9532,0.9880,0.9651,0.9905];
+const BUDGET  = [0.8121,0.8250,0.8905,0.9087,0.9315,0.9231,0.9888,1.0242,0.9532,0.9880,0.9651,0.9905];
+const FY25    = [0.6533,0.5950,0.7892,0.7969,0.8260,0.7680,0.7251,0.7130,0.6210,0.6498,0.6667,0.6769];
+
+const FY26_BUDGET = 11.2007;
+const FY25_TOTAL  = 8.4810;
+
+const EFF_ACTUAL = [2.9347,2.8815,3.1629,3.2620,3.1846,3.2097,3.0578,3.0563,3.2860,3.2394,3.2294,3.2161];
+const EFF_BUDGET = [3.0144,2.8712,3.1629,3.2620,3.1846,3.2097,3.0578,3.0563,3.2860,3.2394,3.2294,3.2161];
+const EFF_FY25   = [2.7309,2.6781,3.2454,3.2802,3.2008,3.0533,2.5485,2.4798,2.5733,2.5305,2.6813,2.6742];
+
+// CDN/SaaS/计算 占比（用于优化测算）
+const CDN_RATIO     = 0.50;
+const SAAS_RATIO    = 0.30;
+const COMPUTE_RATIO = 0.05;
+
+// ===================== COMPUTED =====================
+const ytdActual = ACTUAL.slice(0,ACTUAL_KNOWN).reduce((a,b)=>a+b,0);
+const ytdBudget = BUDGET.slice(0,ACTUAL_KNOWN).reduce((a,b)=>a+b,0);
+const ytdDiff   = ytdActual - ytdBudget;
+const curActual = ACTUAL[ACTUAL_KNOWN-1];
+const curBudget = BUDGET[ACTUAL_KNOWN-1];
+const curDiff   = curActual - curBudget;
+const curEffA   = EFF_ACTUAL[ACTUAL_KNOWN-1];
+const curEffB   = EFF_BUDGET[ACTUAL_KNOWN-1];
+const curEff25  = EFF_FY25[ACTUAL_KNOWN-1];
+const progPct   = ytdActual / FY26_BUDGET * 100;
+
+// 平推预测：用已知月份均值
+const avgActual = ytdActual / ACTUAL_KNOWN;
+const FORECAST  = MONTHS.map((_,i) => i < ACTUAL_KNOWN ? ACTUAL[i] : avgActual);
+const fyForecast = FORECAST.reduce((a,b)=>a+b,0);
+
+// ===================== RENDER SUMMARY =====================
+function fmt(v,d=4){return v.toFixed(d);}
+function fmtM(v){return v>=0?'+'+v.toFixed(4):''+v.toFixed(4);}
+
+document.getElementById('summary-text').innerHTML = `
+  YTD（1-2月）多媒体实际累计支出 <strong class="text-white">${fmt(ytdActual)} 亿元</strong>，
+  预算 ${fmt(ytdBudget)} 亿元，节支 <strong class="${ytdDiff<0?'text-emerald-400':'text-red-400'}">${Math.abs(ytdDiff).toFixed(4)} 亿元（${(Math.abs(ytdDiff)/ytdBudget*100).toFixed(1)}%）</strong>。
+  2月单月实际 <strong class="text-white">${fmt(curActual)} 亿元</strong>，低于预算 ${Math.abs(curDiff).toFixed(4)} 亿元，完成率 <strong class="${curDiff<0?'text-emerald-400':'text-red-400'}">${(curActual/curBudget*100).toFixed(1)}%</strong>。
+  效率指标方面，2月 APP万分钟时长成本实际 <strong class="text-white">${curEffA} 元/万分钟</strong>，
+  ${curEffA<curEffB?'优于':'劣于'}预算（${curEffB}），较 FY25 同期（${curEff25}）${curEffA>curEff25?'上升':'下降'} ${Math.abs(curEffA-curEff25).toFixed(4)} 元。
+`;
+
+// ===================== KPI CARDS =====================
+function kpiCard(title,val,sub,subColor,extra=''){
+  return `<div class="glass rounded-xl p-5 ${extra}">
+    <div class="text-xs text-slate-500 mb-2">${title}</div>
+    <div class="text-2xl font-bold text-white mb-1">${val}</div>
+    <div class="text-xs ${subColor}">${sub}</div>
+  </div>`;
+}
+document.getElementById('kpi-cards').innerHTML =
+  kpiCard('YTD实际（1-2月）', fmt(ytdActual)+' 亿',
+    (ytdDiff<0?'节支 ':'超支 ')+Math.abs(ytdDiff).toFixed(4)+' 亿 vs 预算',
+    ytdDiff<0?'text-emerald-400':'text-red-400', ytdDiff<0?'kpi-pos':'kpi-neg') +
+  kpiCard('YTD预算', fmt(ytdBudget)+' 亿', '完成率 '+(ytdActual/ytdBudget*100).toFixed(1)+'%', 'text-slate-400') +
+  kpiCard('2月实际', fmt(curActual)+' 亿',
+    (curDiff<0?'节支 ':'超支 ')+Math.abs(curDiff).toFixed(4)+' 亿 vs 预算',
+    curDiff<0?'text-emerald-400':'text-red-400', curDiff<0?'kpi-pos':'kpi-neg') +
+  kpiCard('2月预算', fmt(curBudget)+' 亿', 'APP万分钟成本预算 '+curEffB, 'text-slate-400');
+
+// 进度条
+document.getElementById('prog-pct').textContent = progPct.toFixed(1)+'%';
+document.getElementById('prog-fill').style.width = Math.min(progPct,100)+'%';
+document.getElementById('prog-used').textContent = '已用 '+fmt(ytdActual)+' 亿';
+document.getElementById('prog-total').textContent = '全年预算 '+FY26_BUDGET+' 亿';
+
+// ===================== CHARTS =====================
+const chartDefaults = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{labels:{color:'#94a3b8',font:{size:11},boxWidth:12,padding:16}},tooltip:{backgroundColor:'rgba(15,23,42,0.95)',titleColor:'#e2e8f0',bodyColor:'#94a3b8',borderColor:'rgba(255,255,255,0.1)',borderWidth:1}},
+  scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b',font:{size:10}}}}
+};
+
+// 金额图：实线+虚线 for actual
+new Chart(document.getElementById('chart-amount'),{
+  type:'line',
+  data:{
+    labels:MONTHS,
+    datasets:[
+      {label:'FY26 实际',data:ACTUAL.slice(0,ACTUAL_KNOWN).concat(Array(12-ACTUAL_KNOWN).fill(null)),
+        borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',pointBackgroundColor:'#3b82f6',tension:0.3,borderWidth:2.5,pointRadius:4,fill:false},
+      {label:'FY26 预算占位',data:Array(ACTUAL_KNOWN).fill(null).concat(ACTUAL.slice(ACTUAL_KNOWN)),
+        borderColor:'#3b82f6',borderDash:[5,4],backgroundColor:'transparent',pointBackgroundColor:'rgba(59,130,246,0.4)',tension:0.3,borderWidth:1.5,pointRadius:3,fill:false,showLine:true},
+      {label:'FY26 预算',data:BUDGET,borderColor:'#8b5cf6',backgroundColor:'transparent',pointBackgroundColor:'#8b5cf6',tension:0.3,borderWidth:2,pointRadius:3,fill:false},
+      {label:'FY25 同期',data:FY25,borderColor:'#475569',backgroundColor:'transparent',pointBackgroundColor:'#475569',tension:0.3,borderWidth:1.5,pointRadius:3,borderDash:[3,3],fill:false}
+    ]
+  },
+  options:{...chartDefaults, plugins:{...chartDefaults.plugins, legend:{...chartDefaults.plugins.legend, labels:{...chartDefaults.plugins.legend.labels, filter:(i)=>i.text!=='FY26 预算占位'}}}}
+});
+
+// 效率图
+new Chart(document.getElementById('chart-eff'),{
+  type:'line',
+  data:{
+    labels:MONTHS,
+    datasets:[
+      {label:'FY26 实际',data:EFF_ACTUAL.slice(0,ACTUAL_KNOWN).concat(Array(12-ACTUAL_KNOWN).fill(null)),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',pointBackgroundColor:'#3b82f6',tension:0.3,borderWidth:2.5,pointRadius:4,fill:false},
+      {label:'FY26 预算占位',data:Array(ACTUAL_KNOWN).fill(null).concat(EFF_ACTUAL.slice(ACTUAL_KNOWN)),borderColor:'#3b82f6',borderDash:[5,4],backgroundColor:'transparent',pointBackgroundColor:'rgba(59,130,246,0.4)',tension:0.3,borderWidth:1.5,pointRadius:3,fill:false},
+      {label:'FY26 预算',data:EFF_BUDGET,borderColor:'#8b5cf6',backgroundColor:'transparent',pointBackgroundColor:'#8b5cf6',tension:0.3,borderWidth:2,pointRadius:3,fill:false},
+      {label:'FY25 同期',data:EFF_FY25,borderColor:'#475569',backgroundColor:'transparent',pointBackgroundColor:'#475569',tension:0.3,borderWidth:1.5,pointRadius:3,borderDash:[3,3],fill:false}
+    ]
+  },
+  options:{...chartDefaults, plugins:{...chartDefaults.plugins, legend:{...chartDefaults.plugins.legend, labels:{...chartDefaults.plugins.legend.labels, filter:(i)=>i.text!=='FY26 预算占位'}}}}
+});
+
+// ===================== DETAIL TABLE =====================
+let tableHTML = '';
+for(let i=0;i<12;i++){
+  const a=ACTUAL[i], b=BUDGET[i], d=i<ACTUAL_KNOWN?(a-b):null;
+  const isKnown=i<ACTUAL_KNOWN;
+  const pct=isKnown?(a/b*100).toFixed(1):null;
+  tableHTML += `<tr class="border-b border-white/5">
+    <td class="py-2 pr-4 text-slate-300">${MONTHS[i]}${!isKnown?'<span class="ml-1 badge-gray">预测</span>':''}</td>
+    <td class="text-right py-2 pr-4 ${isKnown?'text-white':'text-slate-500'}">${a.toFixed(4)}</td>
+    <td class="text-right py-2 pr-4 text-slate-400">${b.toFixed(4)}</td>
+    <td class="text-right py-2 pr-4">${isKnown?`<span class="${d<0?'text-emerald-400':'text-red-400'}">${d>=0?'+':''}${d.toFixed(4)}</span>`:'<span class="text-slate-600">—</span>'}</td>
+    <td class="text-right py-2 pr-4">${isKnown?`<span class="${parseFloat(pct)<100?'badge-green':'badge-red'}">${pct}%</span>`:'<span class="text-slate-600">—</span>'}</td>
+    <td class="text-right py-2 pr-4 ${isKnown?'text-white':'text-slate-500'}">${EFF_ACTUAL[i]}</td>
+    <td class="text-right py-2 text-slate-400">${EFF_BUDGET[i]}</td>
+  </tr>`;
+}
+document.getElementById('detail-table').innerHTML = tableHTML;
+
+// ===================== FORECAST CHART & TABLE =====================
+let forecastChart;
+function buildForecastChart(adjForecast){
+  const ctx=document.getElementById('chart-forecast');
+  if(forecastChart) forecastChart.destroy();
+  forecastChart = new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:MONTHS,
+      datasets:[
+        {label:'实际',data:ACTUAL.slice(0,ACTUAL_KNOWN).concat(Array(12-ACTUAL_KNOWN).fill(null)),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',pointBackgroundColor:'#3b82f6',tension:0.3,borderWidth:2.5,pointRadius:5,fill:false},
+        {label:'平推预测',data:Array(ACTUAL_KNOWN-1).fill(null).concat(FORECAST.slice(ACTUAL_KNOWN-1)),borderColor:'#f59e0b',borderDash:[6,3],backgroundColor:'rgba(245,158,11,0.08)',pointBackgroundColor:'#f59e0b',tension:0.3,borderWidth:2,pointRadius:3,fill:false},
+        {label:'调节后预测',data:Array(ACTUAL_KNOWN-1).fill(null).concat(adjForecast.slice(ACTUAL_KNOWN-1)),borderColor:'#10b981',borderDash:[4,3],backgroundColor:'rgba(16,185,129,0.06)',pointBackgroundColor:'#10b981',tension:0.3,borderWidth:2,pointRadius:3,fill:false},
+        {label:'预算',data:BUDGET,borderColor:'#8b5cf6',backgroundColor:'transparent',pointBackgroundColor:'#8b5cf6',tension:0.3,borderWidth:1.5,pointRadius:3,fill:false},
+        {label:'FY25 同期',data:FY25,borderColor:'#475569',backgroundColor:'transparent',pointBackgroundColor:'#475569',tension:0.3,borderWidth:1.5,pointRadius:3,borderDash:[3,3],fill:false}
+      ]
+    },
+    options:{...chartDefaults}
+  });
+}
+
+function updateForecast(){
+  const sl1=parseInt(document.getElementById('sl1').value)/100;
+  const sl2=parseInt(document.getElementById('sl2').value)/100;
+  const sl3=parseInt(document.getElementById('sl3').value)/100;
+  document.getElementById('sl1-val').textContent=(sl1*100).toFixed(0)+'%';
+  document.getElementById('sl2-val').textContent=(sl2*100).toFixed(0)+'%';
+  document.getElementById('sl3-val').textContent=(sl3*100).toFixed(0)+'%';
+
+  const saveFactor = CDN_RATIO*sl1 + SAAS_RATIO*sl2 + COMPUTE_RATIO*sl3;
+  const adjForecast = FORECAST.map((v,i)=> i<ACTUAL_KNOWN ? v : v*(1-saveFactor));
+  const adjTotal = adjForecast.reduce((a,b)=>a+b,0);
+  const adjSave  = FY26_BUDGET - adjTotal;
+  const adjPct   = adjSave/FY26_BUDGET*100;
+
+  document.getElementById('adj-total').textContent = adjTotal.toFixed(4)+' 亿';
+  document.getElementById('adj-save').textContent  = adjSave.toFixed(4)+' 亿';
+  document.getElementById('adj-pct').textContent   = adjPct.toFixed(1)+'%';
+
+  buildForecastChart(adjForecast);
+
+  // forecast table
+  let ft='';
+  for(let i=0;i<12;i++){
+    const isK=i<ACTUAL_KNOWN;
+    const base=isK?ACTUAL[i]:FORECAST[i];
+    const adj=isK?ACTUAL[i]:adjForecast[i];
+    const save=BUDGET[i]-adj;
+    ft+=`<tr class="border-b border-white/5">
+      <td class="py-2 pr-4 text-slate-300">${MONTHS[i]}${isK?'<span class="ml-1 badge-green">实际</span>':'<span class="ml-1 badge-gray">预测</span>'}</td>
+      <td class="text-right py-2 pr-4 text-slate-400">${BUDGET[i].toFixed(4)}</td>
+      <td class="text-right py-2 pr-4 ${isK?'text-white':'text-amber-400'}">${base.toFixed(4)}</td>
+      <td class="text-right py-2 pr-4 text-emerald-400">${adj.toFixed(4)}</td>
+      <td class="text-right py-2 ${save>0?'text-emerald-400':'text-red-400'}">${save>=0?'+':''}${save.toFixed(4)}</td>
+    </tr>`;
+  }
+  document.getElementById('forecast-table').innerHTML=ft;
+}
+
+// forecast summary
+document.getElementById('forecast-text').innerHTML =`
+  1-2月完成率分别为 <strong class="text-emerald-400">92.9%</strong>、<strong class="text-emerald-400">83.9%</strong>，节支态势明显。
+  按当前均值（<strong class="text-white">${avgActual.toFixed(4)} 亿/月</strong>）平推，全年预测支出约 <strong class="text-amber-400">${fyForecast.toFixed(2)} 亿元</strong>，
+  较全年预算（${FY26_BUDGET} 亿）节省约 <strong class="text-emerald-400">${(FY26_BUDGET-fyForecast).toFixed(2)} 亿（${((FY26_BUDGET-fyForecast)/FY26_BUDGET*100).toFixed(1)}%）</strong>。
+  建议关注下半年 CDN 带宽增量及 SaaS 合同续签节奏，通过优化滑块可进一步测算节省空间。
+`;
+updateForecast();
+
+// ===================== NAVIGATION =====================
+function showStep(n, btn){
+  [1,2,3].forEach(i=>{
+    document.getElementById('step'+i).style.display = i===n?'block':'none';
+  });
+  document.querySelectorAll('.step-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function showTab(name, btn){
+  ['cdn','saas','storage','compute'].forEach(t=>{
+    const el=document.getElementById('tab-'+t);
+    if(el) el.style.display = t===name?'block':'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
