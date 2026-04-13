@@ -739,11 +739,11 @@ let ACT_COUNT = 2; // 由月份选择器控制
 const COLORS = { 多媒体:'#2558c4' };
 
 const BUDGETS = {
-  多媒体: { monthly:[8121,8250,8905,9087,9315,9231,9888,10242,9532,9880,9651,9905], annual:112007 },
+  多媒体: { monthly:[8121.36, 8250.23, 8904.53, 9086.65, 9315.36, 9230.6, 9888.35, 10241.76, 9532.11, 9879.79, 9650.65, 9905.14], annual:112006.53 },
 };
 const ACTUAL = {
-  // 多媒体：来自booklet simulation M/N列
-  多媒体: [7541,6922,null,null,null,null,null,null,null,null,null,null],
+  // 多媒体：来自booklet simulation Row48 M/N列（亿元×10000）
+  多媒体: [7540.83, 6922.36, null, null, null, null, null, null, null, null, null, null],
 };
 
 // 效率数据
@@ -752,23 +752,29 @@ const EFF = {
   多媒体: {
     label:'APP万分钟时长成本（元/万分钟）', short:'APP万分钟成本',
     hist:[
-      {m:'25-01',eff:2.7309,tgt:null,cost:6533},{m:'25-02',eff:2.6781,tgt:null,cost:5950},
-      {m:'25-03',eff:3.2454,tgt:null,cost:7892},{m:'25-04',eff:3.2802,tgt:null,cost:7969},
-      {m:'25-05',eff:3.2008,tgt:null,cost:8260},{m:'25-06',eff:3.0533,tgt:null,cost:7680},
-      {m:'25-07',eff:2.5485,tgt:null,cost:7251},{m:'25-08',eff:2.4798,tgt:null,cost:7130},
-      {m:'25-09',eff:2.5733,tgt:null,cost:6210},{m:'25-10',eff:2.5305,tgt:null,cost:6498},
-      {m:'25-11',eff:2.6813,tgt:null,cost:6667},{m:'25-12',eff:2.6742,tgt:null,cost:6769},
+            {m:'25-01',eff:2.7309,tgt:null,cost:6533.32},
+      {m:'25-02',eff:2.6781,tgt:null,cost:5950.26},
+      {m:'25-03',eff:3.2454,tgt:null,cost:7892.02},
+      {m:'25-04',eff:3.2802,tgt:null,cost:7969.43},
+      {m:'25-05',eff:3.2008,tgt:null,cost:8260.36},
+      {m:'25-06',eff:3.0533,tgt:null,cost:7679.58},
+      {m:'25-07',eff:2.5485,tgt:null,cost:7250.82},
+      {m:'25-08',eff:2.4798,tgt:null,cost:7130.19},
+      {m:'25-09',eff:2.5733,tgt:null,cost:6209.99},
+      {m:'25-10',eff:2.5305,tgt:null,cost:6497.7},
+      {m:'25-11',eff:2.6813,tgt:null,cost:6667.3},
+      {m:'25-12',eff:2.6742,tgt:null,cost:6768.73},
     ],
     fy26:[
-      {m:'26-01',eff:2.9347,tgt:3.0144,cost:7541},
-      {m:'26-02',eff:2.8815,tgt:2.8712,cost:6922},
+      {m:'26-01',eff:2.9347,tgt:3.0144,cost:7540.83},
+      {m:'26-02',eff:2.8815,tgt:2.8712,cost:6922.36},
       {m:'26-03',eff:null,  tgt:3.1629,cost:null},
-      {m:'26-04',eff:null,  tgt:3.2620,cost:null},
+      {m:'26-04',eff:null,  tgt:3.262,cost:null},
       {m:'26-05',eff:null,  tgt:3.1846,cost:null},
       {m:'26-06',eff:null,  tgt:3.2097,cost:null},
       {m:'26-07',eff:null,  tgt:3.0578,cost:null},
       {m:'26-08',eff:null,  tgt:3.0563,cost:null},
-      {m:'26-09',eff:null,  tgt:3.2860,cost:null},
+      {m:'26-09',eff:null,  tgt:3.286,cost:null},
       {m:'26-10',eff:null,  tgt:3.2394,cost:null},
       {m:'26-11',eff:null,  tgt:3.2294,cost:null},
       {m:'26-12',eff:null,  tgt:3.2161,cost:null},
@@ -1321,21 +1327,21 @@ const DATES = ['1月31日', '2月28日'];
 const SEG_DATA = {
   '多媒体': {
     m1: {
-      total: 7541.00, cpu: 23.61, gpu: 5.29,
+      total: 7540.83, cpu: 23.61, gpu: 5.29,
       subs: [
-        { name: '点播', amt: 3958.26, cpu: 9.44, gpu: 2.12 },
-        { name: '直播', amt: 1892.58, cpu: 7.09, gpu: 1.77 },
-        { name: '图片', amt: 1668.84, cpu: 5.15, gpu: 1.11 },
-        { name: '基建', amt: 261.80, cpu: 1.93, gpu: 0.29 },
+        { name: '点播', amt: 2443.23, cpu: 9.44, gpu: 2.12 },
+        { name: '直播', amt: 2511.1, cpu: 7.09, gpu: 1.77 },
+        { name: '图片', amt: 2217.0, cpu: 5.15, gpu: 1.11 },
+        { name: '基建', amt: 346.88, cpu: 1.93, gpu: 0.29 },
       ],
     },
     m2: {
-      total: 6922.00, cpu: 21.82, gpu: 5.33,
+      total: 6922.36, cpu: 21.82, gpu: 5.33,
       subs: [
-        { name: '点播', amt: 1782.78, cpu: 8.73, gpu: 2.03 },
-        { name: '直播', amt: 1739.53, cpu: 6.55, gpu: 1.85 },
-        { name: '图片', amt: 1225.56, cpu: 4.76, gpu: 1.16 },
-        { name: '基建', amt: 286.67, cpu: 1.78, gpu: 0.29 },
+        { name: '点播', amt: 2443.59, cpu: 8.73, gpu: 2.03 },
+        { name: '直播', amt: 2381.29, cpu: 6.55, gpu: 1.85 },
+        { name: '图片', amt: 1675.21, cpu: 4.76, gpu: 1.16 },
+        { name: '基建', amt: 394.57, cpu: 1.78, gpu: 0.29 },
       ],
     },
   },
@@ -1361,18 +1367,18 @@ const SUB_SEG_CPU = {
 const OM_DATA = {
   多媒体: {
     dates:      ['1月31日','2月28日'],
-    cpuCores:   [1050, 980],
+    cpuCores:   [null, null],
     cpuDay:     [23.61,  21.82],
-    gpuCards:   [210,   215],
+    gpuCards:   [null, null],
     gpuDay:     [5.29,   5.33],
-    storagePiB: [85.0,  87.5],
+    storagePiB: [null, null],
     storageDay: [30.04,  30.28],
-    saasDay:    [70.85,  54.99],
-    diskDay:    [0.83,   0.88],
-    netDay:     [3.37,   3.42],
+    saasDay:    [212.56, 164.99],
+    diskDay:    [2.48,   2.63],
+    netDay:     [10.12,  10.27],
     cpuPrice: 15.13, gpuPrice: 2536.60,
-    gpuUtil: 35.0, gpuUtilTgt: 45,
-    cpuUtil: 28.5, cpuUtilTgt: 35,
+    gpuUtil: null, gpuUtilTgt: null,
+    cpuUtil: null, cpuUtilTgt: null,
   },
 };
 
